@@ -192,9 +192,9 @@ if (projectsStat && projectsSection) {
             }
         });
     </script>
-<!-- HTML: Модальне вікно для відправки повідомлення -->
+<!-- HTML: Модальне вікно для відправки -->
 <div id="msg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
-  <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); position: relative;">
+  <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); position: relative; font-family: sans-serif;">
     <span id="close-modal-btn" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888;">&times;</span>
     <h3 style="margin-top: 0; text-align: center; color: #333;">Написати повідомлення</h3>
     
@@ -205,11 +205,12 @@ if (projectsStat && projectsSection) {
   </div>
 </div>
 
-<!-- JS: Підключення Firebase та логіка -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<!-- 1. Підключаємо класичну бібліотеку Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+<!-- 2. Логіка роботи -->
+<script>
   // Твоя конфігурація Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBuGDd0y2y4Tkf-tcBU_ZshX2uUGK3uQWQ",
@@ -218,46 +219,41 @@ if (projectsStat && projectsSection) {
     projectId: "my-website-5d781",
     storageBucket: "my-website-5d781.firebasestorage.app",
     messagingSenderId: "111570797151",
-    appId: "1:111570797151:web:5d23161a445c946ccb51ea",
-    measurementId: "G-E68VM6TJH3"
+    appId: "1:111570797151:web:5d23161a445c946ccb51ea"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
+  // Ініціалізація Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const database = firebase.database();
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", function() {
     const modal = document.getElementById('msg-modal');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const sendBtn = document.getElementById('send-btn');
 
-    // Знаходимо кнопку "Повідомлення" на твоєму сайті (шукаємо за текстом або класом)
-    const allButtons = document.querySelectorAll('button');
-    let messageTriggerBtn = null;
-
-    allButtons.forEach(btn => {
+    // Автоматично шукаємо кнопку "Повідомлення" на сторінці
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(function(btn) {
       if (btn.textContent.trim().includes('Повідомлення')) {
-        messageTriggerBtn = btn;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          modal.style.display = 'flex';
+        });
       }
     });
 
-    // Якщо знайшли кнопку "Повідомлення" — вішаємо відкриття вікна
-    if (messageTriggerBtn) {
-      messageTriggerBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        modal.style.display = 'flex';
-      });
-    }
-
-    // Закриття вікна на хрестик
+    // Закриття модалки
     if (closeModalBtn) {
-      closeModalBtn.addEventListener('click', () => {
+      closeModalBtn.addEventListener('click', function() {
         modal.style.display = 'none';
       });
     }
 
-    // Відправка повідомлення в Firebase
+    // ВІДПРАВКА В БАЗУ ДАНИХ
     if (sendBtn) {
-      sendBtn.addEventListener('click', () => {
+      sendBtn.addEventListener('click', function() {
         const nameInput = document.getElementById('sender-name');
         const msgInput = document.getElementById('sender-message');
 
@@ -265,17 +261,19 @@ if (projectsStat && projectsSection) {
         const message = msgInput.value.trim();
 
         if (message !== '') {
-          push(ref(database, 'messages'), {
+          // Запис у базу Firebase
+          database.ref('messages').push({
             name: name,
             message: message,
             timestamp: new Date().toLocaleString('uk-UA')
-          }).then(() => {
+          }).then(function() {
             alert('Повідомлення успішно надіслано!');
             msgInput.value = '';
             nameInput.value = '';
             modal.style.display = 'none';
-          }).catch((err) => {
-            alert('Помилка відправки: ' + err.message);
+          }).catch(function(error) {
+            console.error("Помилка:", error);
+            alert('Помилка відправки: ' + error.message);
           });
         } else {
           alert('Будь ласка, введіть текст повідомлення.');
