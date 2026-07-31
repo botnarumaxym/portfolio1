@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Картка профілю</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Навігаційна панель у верхньому правому кутку -->
+    <header class="top-nav">
+        <a href="login.html" class="btn-account">
+            🔑 Увійти / Зареєструватися
+        </a>
+    </header>
+
+    <!-- Головна картка профілю -->
+    <article class="profile-card">
+        <!-- Шапка картки -->
+        <header class="card-header">
+            <img src="botnaru.jpg" alt="Обкладинка профілю" class="avatar-img">
+            <img src="maksim.jpg" alt="Аватар користувача" class="banner-img">
+        </header>
+
+        <!-- Основна інформація -->
+        <div class="card-body">
+            <h2 class="user-name">Максим Ботнару</h2>
+            <p class="user-role">Trainee Frontend Developer</p>
+            <p class="user-bio">Занурююсь у світ IT-технологій. Вивчаю веб-розробку та створюю перші проєкти.</p>
+            
+            <!-- Блок статистики -->
+             <ul class="stats-list">
+    <!-- Обов'язково перевір наявність id="projects-stat" -->
+    <li id="projects-stat" class="stat-item clickable-stat" title="Натисніть, щоб переглянути проєкти">
+        <span id="projects-count" class="stat-value">0</span>
+        <span class="stat-label">Проєкти</span>
+    </li>
+    <li class="stat-item">
+        <span id="followers-count" class="stat-value">0</span>
+        <span class="stat-label">Підписники</span>
+    </li>
+    <li class="stat-item">
+        <span class="stat-value">0</span>
+        <span class="stat-label">Вподобання</span>
+    </li>
+</ul>
+    </li>
+            </ul>
+
+            <!-- Кнопки дій -->
+            <div class="card-actions">
+                <button id="follow-btn" class="btn btn-primary">Підписатися</button>
+                <button id="message-btn" class="btn btn-secondary">Повідомлення</button>
+            </div>
+        </div>
+    </article>
+
+    <!-- Модальне вікно для повідомлення -->
+    <div id="message-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button id="close-modal" class="modal-close">&times;</button>
+            <h3>Надіслати повідомлення</h3>
+            <p class="modal-subtitle">Для Максима Ботнару</p>
+            
+            <textarea id="message-text" placeholder="Введіть ваше повідомлення тут..." rows="4"></textarea>
+            
+            <div class="modal-actions">
+                <button id="send-btn" class="btn btn-primary">Надіслати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript скрипт -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- ЕЛЕМЕНТИ ---
+            const followBtn = document.getElementById('follow-btn');
+            const followersCount = document.getElementById('followers-count');
+            const projectsCountEl = document.getElementById('projects-count');
+            const messageBtn = document.getElementById('message-btn');
+            const messageModal = document.getElementById('message-modal');
+            const closeModal = document.getElementById('close-modal');
+            const sendBtn = document.getElementById('send-btn');
+            const messageText = document.getElementById('message-text');
+            const topNav = document.querySelector('.top-nav');
+
+            // --- 1. ПЕРЕВІРКА АВТОРИЗАЦІЇ ---
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+            if (isLoggedIn && topNav) {
+                topNav.innerHTML = `
+                    <button id="add-project-btn" class="btn btn-primary" style="margin-right: 8px;">+ Додати проєкт</button>
+                    <button id="logout-btn" class="btn btn-secondary">Вийти</button>
+                `;
+
+                document.getElementById('add-project-btn').addEventListener('click', function() {
+                    const projectTitle = prompt('Введіть назву нового проєкту:');
+                    if (projectTitle) {
+                        let count = parseInt(projectsCountEl.textContent) || 0;
+                        count++;
+                        projectsCountEl.textContent = count;
+                        localStorage.setItem('userProjectsCount', count);
+                        alert(`Проєкт "${projectTitle}" успішно додано!`);
+                    }
+                });
+
+                document.getElementById('logout-btn').addEventListener('click', function() {
+                    localStorage.setItem('isLoggedIn', 'false');
+                    window.location.reload();
+                });
+            }
+
+            // --- 2. ВІДНОВЛЕННЯ СТАНУ З LOCALSTORAGE ---
+            const isSubscribedFromStorage = localStorage.getItem('userIsSubscribed') === 'true';
+            let followersFromStorage = parseInt(localStorage.getItem('userFollowersCount')) || 0;
+            let projectsFromStorage = parseInt(localStorage.getItem('userProjectsCount')) || 0;
+
+            followersCount.textContent = followersFromStorage;
+            projectsCountEl.textContent = projectsFromStorage;
+
+            if (isSubscribedFromStorage) {
+                applySubscribedState();
+            } else {
+                applyUnsubscribedState();
+            }
+
+            // --- 3. ЛОГІКА ПІДПИСКИ ---
+            function applySubscribedState() {
+                followBtn.textContent = 'Ви підписані ✓';
+                followBtn.classList.add('subscribed');
+            }
+
+            function applyUnsubscribedState() {
+                followBtn.textContent = 'Підписатися';
+                followBtn.classList.remove('subscribed');
+            }
+
+            followBtn.addEventListener('click', function() {
+                let count = parseInt(followersCount.textContent);
+
+                if (followBtn.textContent === 'Підписатися') {
+                    count++;
+                    applySubscribedState();
+                    localStorage.setItem('userIsSubscribed', 'true');
+                } else {
+                    count--;
+                    applyUnsubscribedState();
+                    localStorage.setItem('userIsSubscribed', 'false');
+                }
+
+                followersCount.textContent = count;
+                localStorage.setItem('userFollowersCount', count);
+            });
+
+            // --- 4. ЛОГІКА МОДАЛЬНОГО ВІКНА ---
+            if (messageBtn) {
+                messageBtn.addEventListener('click', function() {
+                    messageModal.classList.add('active');
+                });
+
+                closeModal.addEventListener('click', function() {
+                    messageModal.classList.remove('active');
+                });
+
+                messageModal.addEventListener('click', function(event) {
+                    if (event.target === messageModal) {
+                        messageModal.classList.remove('active');
+                    }
+                });
+
+                sendBtn.addEventListener('click', function() {
+                    const text = messageText.value.trim();
+                    if (text === '') {
+                        alert('Будь ласка, напишіть текст повідомлення!');
+                    } else {
+                        alert('Дякуємо! Ваше повідомлення надіслано: "' + text + '"');
+                        messageText.value = '';
+                        messageModal.classList.remove('active');
+                    }
+                });
+                // Знаходимо елементи
+const projectsStat = document.getElementById('projects-stat');
+const projectsSection = document.querySelector('.projects-section');
+
+// При кліку на блок "Проєкти" в статистиці — показуємо або ховаємо блок
+if (projectsStat && projectsSection) {
+    projectsStat.addEventListener('click', function() {
+        projectsSection.classList.toggle('visible');
+    });
+}
+            }
+        });
+    </script>
+<!-- HTML: Модальне вікно для відправки повідомлення -->
+<div id="msg-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); position: relative;">
+    <span id="close-modal-btn" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888;">&times;</span>
+    <h3 style="margin-top: 0; text-align: center; color: #333;">Написати повідомлення</h3>
+    
+    <input type="text" id="sender-name" placeholder="Твоє ім'я (анонімно)" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+    <textarea id="sender-message" placeholder="Текст повідомлення..." rows="4" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+    
+    <button type="button" id="send-btn" style="width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Надіслати</button>
+  </div>
+</div>
+
+<!-- JS: Підключення Firebase та логіка -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // Твоя конфігурація Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBuGDd0y2y4Tkf-tcBU_ZshX2uUGK3uQWQ",
+    authDomain: "my-website-5d781.firebaseapp.com",
+    databaseURL: "https://my-website-5d781-default-rtdb.firebaseio.com",
+    projectId: "my-website-5d781",
+    storageBucket: "my-website-5d781.firebasestorage.app",
+    messagingSenderId: "111570797151",
+    appId: "1:111570797151:web:5d23161a445c946ccb51ea",
+    measurementId: "G-E68VM6TJH3"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById('msg-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Знаходимо кнопку "Повідомлення" на твоєму сайті (шукаємо за текстом або класом)
+    const allButtons = document.querySelectorAll('button');
+    let messageTriggerBtn = null;
+
+    allButtons.forEach(btn => {
+      if (btn.textContent.trim().includes('Повідомлення')) {
+        messageTriggerBtn = btn;
+      }
+    });
+
+    // Якщо знайшли кнопку "Повідомлення" — вішаємо відкриття вікна
+    if (messageTriggerBtn) {
+      messageTriggerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.style.display = 'flex';
+      });
+    }
+
+    // Закриття вікна на хрестик
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+
+    // Відправка повідомлення в Firebase
+    if (sendBtn) {
+      sendBtn.addEventListener('click', () => {
+        const nameInput = document.getElementById('sender-name');
+        const msgInput = document.getElementById('sender-message');
+
+        const name = nameInput.value.trim() || 'Анонім';
+        const message = msgInput.value.trim();
+
+        if (message !== '') {
+          push(ref(database, 'messages'), {
+            name: name,
+            message: message,
+            timestamp: new Date().toLocaleString('uk-UA')
+          }).then(() => {
+            alert('Повідомлення успішно надіслано!');
+            msgInput.value = '';
+            nameInput.value = '';
+            modal.style.display = 'none';
+          }).catch((err) => {
+            alert('Помилка відправки: ' + err.message);
+          });
+        } else {
+          alert('Будь ласка, введіть текст повідомлення.');
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>
