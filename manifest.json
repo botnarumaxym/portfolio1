@@ -1,6 +1,6 @@
 {
-  "name": "Портфоліо та Чат",
-  "short_name": "Портфоліо",
+  "name": "NextTalk",
+  "short_name": "NextTalk",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
